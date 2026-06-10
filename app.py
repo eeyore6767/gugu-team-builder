@@ -194,95 +194,229 @@ st.set_page_config(
 
 st.markdown("""
 <style>
+    :root {
+        --forest: #4F7D52;
+        --forest-dark: #2F5D3A;
+        --leaf: #8DBF67;
+        --mushroom: #E8923A;
+        --cream: #FFF8EA;
+        --paper: #FFFDF7;
+        --soil: #6B4F3F;
+        --line: #E6D8C5;
+        --soft-green: #F1FAEF;
+        --soft-orange: #FFF2DC;
+        --danger: #D95F4C;
+    }
+
+    html, body, [data-testid="stAppViewContainer"] {
+        background:
+            radial-gradient(circle at top left, rgba(141,191,103,0.22), transparent 34%),
+            radial-gradient(circle at bottom right, rgba(232,146,58,0.18), transparent 30%),
+            linear-gradient(180deg, #FFF9F0 0%, #F7F1E6 100%);
+    }
+
     .block-container {
-        padding-top: 1.2rem;
-        padding-bottom: 4rem;
+        padding-top: 1.1rem;
+        padding-bottom: 5rem;
         max-width: 1120px;
     }
 
+    header[data-testid="stHeader"] {
+        background: rgba(255, 249, 240, 0.65);
+        backdrop-filter: blur(8px);
+    }
+
     section[data-testid="stSidebar"] {
-        background: #fff7ed;
+        background:
+            linear-gradient(180deg, #F6E8CE 0%, #FFF7EA 100%);
+        border-right: 1px solid var(--line);
+    }
+
+    section[data-testid="stSidebar"] div[role="radiogroup"] label {
+        border-radius: 16px;
+        padding: 8px 10px;
+        margin-bottom: 4px;
+        background: rgba(255,255,255,0.35);
+    }
+
+    section[data-testid="stSidebar"] div[role="radiogroup"] label:hover {
+        background: rgba(255,255,255,0.75);
     }
 
     .main-title {
-        font-size: 2rem;
-        font-weight: 900;
-        margin-bottom: 0.15rem;
+        font-size: 2.15rem;
+        font-weight: 950;
+        letter-spacing: -0.04em;
+        color: var(--forest-dark);
+        margin-bottom: 0.1rem;
+        text-shadow: 0 2px 0 rgba(255,255,255,0.8);
     }
 
     .subtle {
-        color: #666;
-        font-size: 0.95rem;
-        margin-bottom: 1rem;
+        color: #7A6C5D;
+        font-size: 0.96rem;
+        margin-bottom: 1.2rem;
+    }
+
+    h1, h2, h3 {
+        color: #2F3542;
+        letter-spacing: -0.03em;
+    }
+
+    .stMarkdown h2 {
+        border-left: 8px solid var(--mushroom);
+        padding-left: 12px;
+        margin-top: 1.1rem;
     }
 
     .gugu-card {
-        border: 1px solid #eadfd3;
-        border-radius: 18px;
-        padding: 14px;
-        background: #fffaf5;
-        box-shadow: 0 2px 10px rgba(0,0,0,0.04);
-        margin-bottom: 14px;
+        position: relative;
+        border: 1px solid var(--line);
+        border-radius: 24px;
+        padding: 16px;
+        background:
+            linear-gradient(180deg, rgba(255,255,255,0.88), rgba(255,248,234,0.95));
+        box-shadow:
+            0 10px 24px rgba(76, 58, 38, 0.08),
+            inset 0 1px 0 rgba(255,255,255,0.9);
+        margin-bottom: 16px;
+        overflow: hidden;
+    }
+
+    .gugu-card::before {
+        content: "";
+        position: absolute;
+        right: -18px;
+        top: -18px;
+        width: 76px;
+        height: 76px;
+        background: rgba(141,191,103,0.18);
+        border-radius: 999px;
     }
 
     .gugu-title {
-        font-size: 1.08rem;
-        font-weight: 800;
-        margin: 8px 0 6px 0;
+        font-size: 1.16rem;
+        font-weight: 900;
+        color: var(--forest-dark);
+        margin: 10px 0 8px 0;
     }
 
     .stat-row {
-        font-size: 0.95rem;
-        line-height: 1.75;
+        font-size: 0.98rem;
+        line-height: 1.85;
+        color: #51463D;
     }
 
     .task-card {
-        border-left: 6px solid #f59e0b;
-        border-radius: 14px;
-        padding: 12px 14px;
-        background: #fffbeb;
-        margin-bottom: 10px;
+        border: 1px solid #F0D3A6;
+        border-left: 8px solid var(--mushroom);
+        border-radius: 18px;
+        padding: 13px 15px;
+        background:
+            linear-gradient(180deg, #FFF8E9 0%, #FFFDF6 100%);
+        box-shadow: 0 6px 14px rgba(111, 82, 42, 0.06);
+        margin-bottom: 12px;
     }
 
     .task-title {
-        font-weight: 800;
-        margin-bottom: 4px;
+        font-weight: 900;
+        color: #6B4F3F;
+        margin-bottom: 5px;
     }
 
     .team-card {
-        border: 1px solid #d9e8dd;
-        border-radius: 18px;
-        padding: 14px;
-        background: #f6fff7;
+        border: 1px solid #CFE3C8;
+        border-radius: 24px;
+        padding: 16px;
+        background:
+            linear-gradient(180deg, #F8FFF5 0%, #FFFFFF 100%);
         text-align: center;
-        min-height: 230px;
+        min-height: 235px;
         margin-bottom: 14px;
+        box-shadow: 0 10px 20px rgba(47,93,58,0.08);
     }
 
     .score-box {
-        border-radius: 18px;
-        padding: 18px;
-        background: #eef6ff;
-        border: 1px solid #d7e7f7;
+        border-radius: 26px;
+        padding: 22px;
+        background:
+            linear-gradient(135deg, #EAF8DE 0%, #FFF4DC 100%);
+        border: 1px solid #D9E7C8;
         text-align: center;
-        margin: 10px 0 16px 0;
+        margin: 10px 0 18px 0;
+        box-shadow: 0 10px 24px rgba(47,93,58,0.08);
     }
 
     .score-number {
-        font-size: 2rem;
-        font-weight: 900;
+        font-size: 2.35rem;
+        font-weight: 950;
+        color: var(--forest-dark);
     }
 
     div[data-testid="stButton"] button {
-        border-radius: 12px;
-        min-height: 42px;
+        border-radius: 16px;
+        min-height: 44px;
+        border: 1px solid #D7C2A4;
+        background: linear-gradient(180deg, #FFFFFF, #FFF4DF);
+        color: #4A3B30;
+        font-weight: 750;
+        box-shadow: 0 3px 0 rgba(107,79,63,0.12);
+    }
+
+    div[data-testid="stButton"] button:hover {
+        border-color: var(--mushroom);
+        color: var(--forest-dark);
+        transform: translateY(-1px);
     }
 
     div[data-testid="stForm"] {
+        border-radius: 24px;
+        border: 1px solid var(--line);
+        padding: 16px;
+        background: rgba(255,255,255,0.72);
+        box-shadow: 0 8px 20px rgba(76, 58, 38, 0.06);
+    }
+
+    div[data-baseweb="input"] input,
+    div[data-baseweb="select"] > div,
+    div[data-testid="stNumberInput"] input {
+        border-radius: 14px !important;
+        background: #FFFDF8 !important;
+    }
+
+    div[data-testid="stExpander"] {
         border-radius: 18px;
-        border: 1px solid #eee;
-        padding: 12px;
-        background: #ffffff;
+        border: 1px solid var(--line);
+        overflow: hidden;
+        background: rgba(255,255,255,0.75);
+    }
+
+    .stAlert {
+        border-radius: 16px;
+    }
+
+    img {
+        border-radius: 14px;
+    }
+
+    @media (max-width: 768px) {
+        .block-container {
+            padding-left: 1rem;
+            padding-right: 1rem;
+            padding-top: 0.8rem;
+        }
+
+        .main-title {
+            font-size: 1.75rem;
+        }
+
+        .score-number {
+            font-size: 2rem;
+        }
+
+        .gugu-card, .team-card, .task-card {
+            border-radius: 20px;
+        }
     }
 </style>
 """, unsafe_allow_html=True)
@@ -354,6 +488,9 @@ def render_task_card(task, index=None):
         unsafe_allow_html=True
     )
 
+
+st.sidebar.markdown("## 🍄 菇菇工具")
+st.sidebar.caption("組隊、關卡與資料管理")
 
 page = st.sidebar.radio(
     "功能選單",
