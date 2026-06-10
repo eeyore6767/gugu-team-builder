@@ -102,17 +102,39 @@ def get_skill_icon(skill_name):
     return ""
 
 
+def task_has_bonus(task):
+    return bool(
+        task.get("bonus_enabled")
+        and task.get("bonus_skill")
+        and task.get("bonus_stat")
+        and int(task.get("bonus_value", 0)) != 0
+    )
+
+
+def task_bonus_text(task):
+    if not task_has_bonus(task):
+        return ""
+
+    return (
+        f"｜附加條件：擁有技能【{task.get('bonus_skill')}】時，"
+        f"{task.get('bonus_stat')} +{task.get('bonus_value')}"
+    )
+
+
 def task_to_text(task):
     task_type = task.get("type")
 
     if task_type == "single_stat":
-        return f"隊伍中至少一隻 {task.get('stat', '力量')} ≥ {task.get('value', 0)}"
+        base = f"隊伍中至少一隻 {task.get('stat', '力量')} ≥ {task.get('value', 0)}"
+        return base + task_bonus_text(task)
 
     if task_type == "count_stat":
-        return f"隊伍中至少 {task.get('count', 2)} 隻 {task.get('stat', '力量')} ≥ {task.get('value', 0)}"
+        base = f"隊伍中至少 {task.get('count', 2)} 隻 {task.get('stat', '力量')} ≥ {task.get('value', 0)}"
+        return base + task_bonus_text(task)
 
     if task_type == "team_stat":
-        return f"全隊 {task.get('stat', '力量')} 總和 ≥ {task.get('value', 0)}"
+        base = f"全隊 {task.get('stat', '力量')} 總和 ≥ {task.get('value', 0)}"
+        return base + task_bonus_text(task)
 
     if task_type == "single_skill":
         return f"隊伍中至少一隻擁有技能【{task.get('skill', '')}】"
@@ -123,29 +145,33 @@ def task_to_text(task):
     return "未知任務"
 
 
-def get_stat(gugu, stat_name):
+def get_stat(gugu, stat_name, task=None):
     value = gugu["stats"][stat_name]
 
-    # 目前保留原本規則：擁有「運氣」時力量 +30
-    if stat_name == "力量" and "運氣" in gugu["skills"]:
-        value += 30
+    # 任務專屬加成：只在這個任務判定時生效
+    if task_has_bonus(task or {}):
+        if (
+            stat_name == task.get("bonus_stat")
+            and task.get("bonus_skill") in gugu.get("skills", [])
+        ):
+            value += int(task.get("bonus_value", 0))
 
     return value
 
 
 def check_task(team, task):
     if task["type"] == "single_stat":
-        return any(get_stat(gugu, task["stat"]) >= task["value"] for gugu in team)
+        return any(get_stat(gugu, task["stat"], task) >= task["value"] for gugu in team)
 
     if task["type"] == "count_stat":
         return sum(
             1
             for gugu in team
-            if get_stat(gugu, task["stat"]) >= task["value"]
+            if get_stat(gugu, task["stat"], task) >= task["value"]
         ) >= task["count"]
 
     if task["type"] == "team_stat":
-        return sum(get_stat(gugu, task["stat"]) for gugu in team) >= task["value"]
+        return sum(get_stat(gugu, task["stat"], task) for gugu in team) >= task["value"]
 
     if task["type"] == "single_skill":
         return any(task["skill"] in gugu["skills"] for gugu in team)
@@ -845,6 +871,44 @@ elif page == "關卡管理":
                         key=f"count_{stage_index}_{task_index}"
                     )
 
+                edit_bonus_enabled = False
+                edit_bonus_skill = ""
+                edit_bonus_stat = "力量"
+                edit_bonus_value = 30
+
+                if edit_task_type in ["single_stat", "count_stat", "team_stat"]:
+                    st.markdown("**任務專屬附加條件**")
+                    edit_bonus_enabled = st.checkbox(
+                        "啟用技能數值加成",
+                        value=task.get("bonus_enabled", False),
+                        key=f"bonus_enabled_{stage_index}_{task_index}"
+                    )
+
+                    if edit_bonus_enabled:
+                        if skill_list:
+                            edit_bonus_skill = st.selectbox(
+                                "觸發技能",
+                                skill_list,
+                                index=skill_list.index(task.get("bonus_skill", skill_list[0])) if task.get("bonus_skill") in skill_list else 0,
+                                key=f"bonus_skill_{stage_index}_{task_index}"
+                            )
+                        else:
+                            st.warning("請先新增技能")
+
+                        edit_bonus_stat = st.selectbox(
+                            "加成數值",
+                            stats,
+                            index=stats.index(task.get("bonus_stat", "力量")) if task.get("bonus_stat") in stats else 0,
+                            key=f"bonus_stat_{stage_index}_{task_index}"
+                        )
+
+                        edit_bonus_value = st.number_input(
+                            "加成量",
+                            min_value=0,
+                            value=task.get("bonus_value", 30),
+                            key=f"bonus_value_{stage_index}_{task_index}"
+                        )
+
                 col1, col2 = st.columns(2)
 
                 with col1:
@@ -866,6 +930,12 @@ elif page == "關卡管理":
 
                         if edit_task_type in ["single_skill", "count_skill"]:
                             updated_task["skill"] = edit_skill
+
+                        if edit_task_type in ["single_stat", "count_stat", "team_stat"] and edit_bonus_enabled:
+                            updated_task["bonus_enabled"] = True
+                            updated_task["bonus_skill"] = edit_bonus_skill
+                            updated_task["bonus_stat"] = edit_bonus_stat
+                            updated_task["bonus_value"] = edit_bonus_value
 
                         stages[stage_index]["tasks"][task_index] = updated_task
                         save_data("stages", stages)
@@ -936,6 +1006,41 @@ elif page == "關卡管理":
                     key=f"new_task_count_{stage_index}"
                 )
 
+            new_bonus_enabled = False
+            new_bonus_skill = ""
+            new_bonus_stat = "力量"
+            new_bonus_value = 30
+
+            if new_task_type in ["single_stat", "count_stat", "team_stat"]:
+                st.markdown("**任務專屬附加條件**")
+                new_bonus_enabled = st.checkbox(
+                    "啟用技能數值加成",
+                    key=f"new_bonus_enabled_{stage_index}"
+                )
+
+                if new_bonus_enabled:
+                    if skill_list:
+                        new_bonus_skill = st.selectbox(
+                            "觸發技能",
+                            skill_list,
+                            key=f"new_bonus_skill_{stage_index}"
+                        )
+                    else:
+                        st.warning("請先新增技能")
+
+                    new_bonus_stat = st.selectbox(
+                        "加成數值",
+                        stats,
+                        key=f"new_bonus_stat_{stage_index}"
+                    )
+
+                    new_bonus_value = st.number_input(
+                        "加成量",
+                        min_value=0,
+                        value=30,
+                        key=f"new_bonus_value_{stage_index}"
+                    )
+
             if st.button("新增任務", key=f"add_task_button_{stage_index}"):
                 if not new_task_name.strip():
                     st.error("請輸入任務名稱")
@@ -956,6 +1061,12 @@ elif page == "關卡管理":
 
                     if new_task_type in ["single_skill", "count_skill"]:
                         new_task["skill"] = new_task_skill
+
+                    if new_task_type in ["single_stat", "count_stat", "team_stat"] and new_bonus_enabled:
+                        new_task["bonus_enabled"] = True
+                        new_task["bonus_skill"] = new_bonus_skill
+                        new_task["bonus_stat"] = new_bonus_stat
+                        new_task["bonus_value"] = new_bonus_value
 
                     stages[stage_index]["tasks"].append(new_task)
                     save_data("stages", stages)
