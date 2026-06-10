@@ -749,46 +749,62 @@ elif page == "關卡管理":
 
             st.subheader("新增任務")
 
-            with st.form(f"add_task_form_{stage_index}"):
-                new_task_name = st.text_input("任務名稱")
+            new_task_name = st.text_input(
+                "任務名稱",
+                key=f"new_task_name_{stage_index}"
+            )
 
-                new_task_type = st.selectbox(
-                    "任務類型",
-                    task_types,
-                    format_func=lambda x: task_type_labels[x]
+            new_task_type = st.selectbox(
+                "任務類型",
+                task_types,
+                format_func=lambda x: task_type_labels[x],
+                key=f"new_task_type_{stage_index}"
+            )
+
+            new_task_stat = "力量"
+            if new_task_type in ["single_stat", "count_stat", "team_stat"]:
+                new_task_stat = st.selectbox(
+                    "數值",
+                    stats,
+                    key=f"new_task_stat_{stage_index}"
                 )
 
-                new_task_stat = "力量"
-                if new_task_type in ["single_stat", "count_stat", "team_stat"]:
-                    new_task_stat = st.selectbox("數值", stats)
-
-                new_task_skill = ""
-                if new_task_type in ["single_skill", "count_skill"]:
-                    if skill_list:
-                        new_task_skill = st.selectbox("技能", skill_list)
-                    else:
-                        st.warning("請先新增技能")
-
-                new_task_value = 0
-                if new_task_type in ["single_stat", "count_stat", "team_stat"]:
-                    new_task_value = st.number_input(
-                        "需求數值",
-                        min_value=0,
-                        value=50
+            new_task_skill = ""
+            if new_task_type in ["single_skill", "count_skill"]:
+                if skill_list:
+                    new_task_skill = st.selectbox(
+                        "所需技能",
+                        skill_list,
+                        key=f"new_task_skill_{stage_index}"
                     )
+                else:
+                    st.warning("請先新增技能")
 
-                new_task_count = 2
-                if new_task_type in ["count_stat", "count_skill"]:
-                    new_task_count = st.number_input(
-                        "需求人數",
-                        min_value=1,
-                        max_value=3,
-                        value=2
-                    )
+            new_task_value = 0
+            if new_task_type in ["single_stat", "count_stat", "team_stat"]:
+                new_task_value = st.number_input(
+                    "需求數值",
+                    min_value=0,
+                    value=50,
+                    key=f"new_task_value_{stage_index}"
+                )
 
-                add_task_submit = st.form_submit_button("新增任務")
+            new_task_count = 1
+            if new_task_type in ["count_stat", "count_skill"]:
+                new_task_count = st.number_input(
+                    "需求人數",
+                    min_value=1,
+                    max_value=3,
+                    value=2,
+                    key=f"new_task_count_{stage_index}"
+                )
 
-                if add_task_submit:
+            if st.button("新增任務", key=f"add_task_button_{stage_index}"):
+                if not new_task_name.strip():
+                    st.error("請輸入任務名稱")
+                elif new_task_type in ["single_skill", "count_skill"] and not new_task_skill:
+                    st.error("請選擇所需技能")
+                else:
                     new_task = {
                         "name": new_task_name.strip(),
                         "type": new_task_type
