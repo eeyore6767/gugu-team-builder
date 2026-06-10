@@ -1,0 +1,26 @@
+[
+    {
+        "name": "鼴鼠洞穴",
+        "tasks": [
+            {
+                "name": "力量50",
+                "type": "single_stat",
+                "stat": "力量",
+                "value": 50
+            },
+            {
+                "name": "力量90",
+                "type": "single_stat",
+                "stat": "力量",
+                "value": 90
+            },
+            {
+                "name": "兩隻力量80",
+                "type": "count_stat",
+                "stat": "力量",
+                "value": 80,
+                "count": 2
+            }
+        ]
+    }
+]
