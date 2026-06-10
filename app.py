@@ -268,15 +268,45 @@ st.header("關卡任務管理")
 task_types = ["single_stat", "count_stat", "team_stat", "single_skill"]
 stats = ["力量", "智慧", "速度"]
 
+task_type_labels = {
+    "single_stat": "單體數值",
+    "count_stat": "指定人數數值",
+    "team_stat": "全隊總和數值",
+    "single_skill": "技能需求"
+}
+
+
+def task_to_text(task):
+    if task["type"] == "single_stat":
+        return f"隊伍中至少一隻 {task['stat']} ≥ {task['value']}"
+
+    if task["type"] == "count_stat":
+        return f"隊伍中至少 {task['count']} 隻 {task['stat']} ≥ {task['value']}"
+
+    if task["type"] == "team_stat":
+        return f"全隊 {task['stat']} 總和 ≥ {task['value']}"
+
+    if task["type"] == "single_skill":
+        return f"隊伍中至少一隻擁有技能【{task['skill']}】"
+
+    return "未知任務"
+
 for stage_index, stage in enumerate(stages):
     with st.expander(stage["name"]):
         st.subheader("目前任務")
 
         for task_index, task in enumerate(stage["tasks"]):
             st.markdown(f"### 任務 {task_index + 1}")
+            st.info(task_to_text(task))
 
             edit_task_name = st.text_input("任務名稱", value=task["name"], key=f"task_name_{stage_index}_{task_index}")
-            edit_task_type = st.selectbox("任務類型", task_types, index=task_types.index(task["type"]), key=f"type_{stage_index}_{task_index}")
+            edit_task_type = st.selectbox(
+                "任務類型",
+                task_types,
+                format_func=lambda x: task_type_labels[x],
+                index=task_types.index(task["type"]),
+                key=f"type_{stage_index}_{task_index}"
+            )
 
             edit_stat = "力量"
             if edit_task_type != "single_skill":
@@ -336,7 +366,11 @@ for stage_index, stage in enumerate(stages):
 
         with st.form(f"add_task_form_{stage_index}"):
             new_task_name = st.text_input("任務名稱")
-            new_task_type = st.selectbox("任務類型", task_types)
+            new_task_type = st.selectbox(
+                "任務類型",
+                task_types,
+                format_func=lambda x: task_type_labels[x]
+            )
 
             new_task_stat = "力量"
             if new_task_type != "single_skill":
@@ -410,7 +444,7 @@ else:
         return False
 
     def calc_score(team):
-        success_tasks = [task["name"] for task in tasks if check_task(team, task)]
+        success_tasks = [task for task in tasks if check_task(team, task)]
         return len(success_tasks), success_tasks
 
     best_team = None
@@ -450,7 +484,8 @@ else:
 
         st.subheader("完成的任務")
 
-        for task_name in best_success_tasks:
-            st.write(f"✅ {task_name}")
+        for task in best_success_tasks:
+            st.write(f"✅ {task['name']}")
+            st.caption(task_to_text(task))
     else:
         st.warning("目前沒有菇菇可計算")
